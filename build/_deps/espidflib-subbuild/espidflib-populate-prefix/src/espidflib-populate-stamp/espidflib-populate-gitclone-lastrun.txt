@@ -1,0 +1,15 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=git
+command=C:/Users/BahaaAY/.espressif/tools/cmake/3.24.0/bin/cmake.exe;-P;B:/Courses/Thesis/IOT/FireWatcher-Receiver/build/_deps/espidflib-subbuild/espidflib-populate-prefix/tmp/espidflib-populate-gitclone.cmake
+source_dir=B:/Courses/Thesis/IOT/FireWatcher-Receiver/build/_deps/espidflib-src
+work_dir=B:/Courses/Thesis/IOT/FireWatcher-Receiver/build/_deps
+repository=https://github.com/UncleRus/esp-idf-lib.git
+remote=origin
+init_submodules=TRUE
+recurse_submodules=--recursive
+submodules=
+CMP0097=NEW
+
