@@ -17,6 +17,26 @@
 #define DIO1 35
 #define DIO2 34
 
+int16_t humidity, temperature, rawSmoke, calSmokeVoltage;
+
+#include <stdint.h>
+
+void unpackData(const uint8_t *dataArray, int16_t *humidity,
+                int16_t *temperature, int16_t *rawSmoke,
+                int16_t *calSmokeVoltage) {
+  // Unpack humidity
+  *humidity = (int16_t)((dataArray[1] << 8) | dataArray[0]);
+
+  // Unpack temperature
+  *temperature = (int16_t)((dataArray[3] << 8) | dataArray[2]);
+
+  // Unpack rawSmoke
+  *rawSmoke = (int16_t)((dataArray[5] << 8) | dataArray[4]);
+
+  // Unpack calSmokeVoltage
+  *calSmokeVoltage = (int16_t)((dataArray[7] << 8) | dataArray[6]);
+}
+
 sx127x *device = NULL;
 TaskHandle_t handle_interrupt;
 int total_packets_received = 0;
@@ -47,6 +67,19 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   ESP_ERROR_CHECK(sx127x_rx_get_frequency_error(device, &frequency_error));
   ESP_LOGI(TAG, "received: %d %s freq_error: %" PRId32, data_length, payload,
            frequency_error);
+  // print rssi
+  int16_t rssi;
+  ESP_ERROR_CHECK(sx127x_rx_get_packet_rssi(device, &rssi));
+  ESP_LOGI(TAG, "with rssi: %d", rssi);
+
+  unpackData(data, &humidity, &temperature, &rawSmoke, &calSmokeVoltage);
+  ESP_LOGI(TAG, "Humidity: %d%%", humidity);
+  ESP_LOGI(TAG, "Temperature: %dC", temperature);
+  ESP_LOGI(TAG, "Raw Smoke: %d", rawSmoke);
+  ESP_LOGI(TAG, "Calibrated Smoke: %d", calSmokeVoltage);
+
+  ESP_LOGI(TAG, "total packets received: %d", total_packets_received);
+
   total_packets_received++;
 }
 
@@ -81,7 +114,7 @@ void app_main() {
   ESP_ERROR_CHECK(sx127x_create(spi_device, &device));
   ESP_ERROR_CHECK(
       sx127x_set_opmod(SX127x_MODE_SLEEP, SX127x_MODULATION_FSK, device));
-  ESP_ERROR_CHECK(sx127x_set_frequency(437200012, device));
+  ESP_ERROR_CHECK(sx127x_set_frequency(915000000, device));
   ESP_ERROR_CHECK(
       sx127x_set_opmod(SX127x_MODE_STANDBY, SX127x_MODULATION_FSK, device));
   ESP_ERROR_CHECK(sx127x_fsk_ook_set_bitrate(4800.0, device));
