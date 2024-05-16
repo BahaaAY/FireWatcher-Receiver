@@ -18,6 +18,7 @@
   "idf.flashType": "UART",
   "files.associations": {
     "*.ejs": "html",
-    "nvs_flash.h": "c"
+    "nvs_flash.h": "c",
+    "lvgl.h": "c"
   }
 }
