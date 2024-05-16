@@ -345,6 +345,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     case WIFI_PROV_END:
       /* De-initialize manager once provisioning is finished */
       wifi_prov_mgr_deinit();
+      setupLora();
       break;
     default:
       break;
@@ -434,7 +435,8 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf,
 #define LV_COLOR_WHITE lv_color_make(255, 255, 255)
 #define LV_COLOR_BLACK lv_color_make(0, 0, 0)
 #define QR_CODE_SIZE 33
-void display_oled_qr() {
+void display_oled_qr(char *link) {
+
   TAG = "QRCODE_DISPLAY";
   ESP_LOGI(TAG, "Displaying QR code on OLED");
   lv_obj_t *qrcode_obj =
@@ -442,7 +444,6 @@ void display_oled_qr() {
                        LV_COLOR_WHITE); // Replace values as needed
 
   // Update the QR code content
-  const char *link = "your_link_here";
   lv_qrcode_update(qrcode_obj, link, strlen(link));
   lv_obj_align(qrcode_obj, LV_ALIGN_CENTER, 0, 0);
   lv_scr_load(lv_scr_act());
@@ -461,7 +462,8 @@ static void wifi_prov_print_qr(const char *name, const char *transport) {
   ESP_LOGI(
       TAG,
       "Scan this QR code from the provisioning application for Provisioning.");
-  ESP_LOGI("mY kao", "QR Code Payload: %s", payload);
+
+  display_oled_qr(payload);
   esp_qrcode_config_t cfg = ESP_QRCODE_CONFIG_DEFAULT();
   esp_qrcode_generate(&cfg, payload);
   ESP_LOGI(TAG,
@@ -559,6 +561,7 @@ void setupWifi() {
     wifi_prov_mgr_deinit();
     /* Start Wi-Fi station */
     wifi_init_sta();
+    setupLora();
   }
   /* Wait for Wi-Fi connection */
   xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, true, true,
@@ -566,12 +569,11 @@ void setupWifi() {
 }
 void app_main() {
   ESP_LOGI(TAG, "starting up");
-  // gpio_set_direction(RECEIVER_LED, GPIO_MODE_OUTPUT);
+  gpio_set_direction(RECEIVER_LED, GPIO_MODE_OUTPUT);
   setupOled();
-  // setupLora();
-  // gpio_set_level(RECEIVER_LED, 0);
-  // setupWifi();
-  display_oled_qr();
+
+  gpio_set_level(RECEIVER_LED, 0);
+  setupWifi();
 
   while (1) {
     vTaskDelay(10000 / portTICK_PERIOD_MS);
