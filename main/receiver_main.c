@@ -109,7 +109,7 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   ESP_LOGI(TAG, "total packets received: %d", total_packets_received);
 
   total_packets_received++;
-  display_oled(disp, &temperature, &humidity, &rawSmoke, &calSmokeVoltage);
+  display_oled(&temperature, &humidity, &rawSmoke, &calSmokeVoltage);
   gpio_set_level(RECEIVER_LED, 0);
 }
 
@@ -454,7 +454,7 @@ void setupWifi() {
 void app_main() {
   ESP_LOGI(TAG, "starting up");
   gpio_set_direction(RECEIVER_LED, GPIO_MODE_OUTPUT);
-  setupOled(disp);
+  setupOled();
 
   gpio_set_level(RECEIVER_LED, 0);
   setupWifi();

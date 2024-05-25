@@ -3,8 +3,8 @@
 
 #include <lvgl.h>
 
-void setupOled(lv_disp_t *disp);
+void setupOled();
 void display_oled_qr(char *link);
-void display_oled(lv_disp_t *disp, int16_t *temperature, int16_t *humidity,
-                  int16_t *smoke, int16_t *calSmokeVoltage);
+void display_oled(int16_t *temperature, int16_t *humidity, int16_t *smoke,
+                  int16_t *calSmokeVoltage);
 #endif // OLED_DISPLAY_H

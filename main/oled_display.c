@@ -20,7 +20,9 @@
 #define OLED_CMD_BITS 8
 #define OLED_PARAM_BITS 8
 
-void setupOled(lv_disp_t *disp) {
+extern lv_disp_t *disp;
+
+void setupOled() {
   const char *TAG = "SETUP_OLED";
   ESP_LOGI(TAG, "Initialize I2C bus");
   i2c_master_bus_handle_t i2c_bus = NULL;
@@ -82,6 +84,13 @@ void setupOled(lv_disp_t *disp) {
 
   /* Rotation of the screen */
   lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
+
+  if (disp == NULL) {
+    ESP_LOGE(TAG, "Failed to add display");
+    return;
+  }
+  // print address of disp
+  ESP_LOGI("SETUP_OLED", "Address of disp after setup: %p", (void *)disp);
 }
 
 #define LV_COLOR_WHITE lv_color_make(255, 255, 255)
@@ -100,10 +109,26 @@ void display_oled_qr(char *link) {
   lv_scr_load(lv_scr_act());
 }
 
-void display_oled(lv_disp_t *disp, int16_t *temperature, int16_t *humidity,
-                  int16_t *smoke, int16_t *calSmokeVoltage) {
+void display_oled(int16_t *temperature, int16_t *humidity, int16_t *smoke,
+                  int16_t *calSmokeVoltage) {
 
-  lv_obj_t *scr = lv_scr_act();
+  // print address of disp
+  ESP_LOGI("DISPLAY_OLED", "Address of disp in display_oled: %p", (void *)disp);
+
+  if (disp == NULL) {
+    ESP_LOGI("DISPLAY_OLED", "disp is NULL");
+  }
+
+  if (!disp || !(disp->driver)) {
+    ESP_LOGE("DISPLAY_OLED", "Display or display driver is NULL");
+    return;
+  }
+
+  lv_obj_t *scr = lv_disp_get_scr_act(disp);
+  if (!scr) {
+    ESP_LOGE("DISPLAY_OLED", "Active screen is NULL");
+    return;
+  }
 
   // clear the screen
 
@@ -120,7 +145,7 @@ void display_oled(lv_disp_t *disp, int16_t *temperature, int16_t *humidity,
 
   /* Size of the screen (if you use rotation 90 or 270, please set
    * disp->driver->ver_res) */
-  //   lv_obj_set_width(label, disp->driver->hor_res);
+  lv_obj_set_width(label, disp->driver->hor_res);
   lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
-  lv_scr_load(lv_scr_act());
+  //   lv_scr_load(lv_scr_act());
 }
