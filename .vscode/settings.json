@@ -19,6 +19,12 @@
   "files.associations": {
     "*.ejs": "html",
     "nvs_flash.h": "c",
-    "lvgl.h": "c"
+    "lvgl.h": "c",
+    "esp_lcd_panel_io.h": "c",
+    "esp_lvgl_port.h": "c",
+    "oled_display.h": "c",
+    "i2c_master.h": "c",
+    "sx127x.h": "c",
+    "spi_master.h": "c"
   }
 }

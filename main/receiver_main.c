@@ -27,6 +27,8 @@
 
 #include "./espressif__qrcode/qrcodegen.h"
 
+#include "oled_display.h"
+
 // LORA PINS
 #define SCK 5
 #define MISO 19
@@ -39,19 +41,6 @@
 
 #define RECEIVER_LED 33
 
-#define I2C_BUS_PORT 0
-
-#define OLED_PIXEL_CLOCK_HZ (400 * 1000)
-#define OLED_PIN_NUM_SDA 4
-#define OLED_PIN_NUM_SCL 15
-#define OLED_PIN_NUM_RST 16
-#define OLED_I2C_HW_ADDR 0x3C
-
-#define OLED_H_RES 128
-#define OLED_V_RES 64
-
-#define OLED_CMD_BITS 8
-#define OLED_PARAM_BITS 8
 lv_disp_t *disp;
 
 int16_t humidity, temperature, rawSmoke, calSmokeVoltage = 0;
@@ -90,30 +79,6 @@ void handle_interrupt_task(void *arg) {
   }
 }
 
-void display_oled(int16_t *temperature, int16_t *humidity, int16_t *smoke,
-                  int16_t *calSmokeVoltage) {
-
-  lv_obj_t *scr = lv_disp_get_scr_act(disp);
-
-  // clear the screen
-
-  lv_obj_clean(scr);
-
-  lv_obj_t *label = lv_label_create(scr);
-  // lv_label_set_long_mode(label,
-  //                        LV_LABEL_LONG_SCROLL_CIRCULAR); /* Circular scroll
-  //                        */
-  lv_label_set_text_fmt(
-      label, "Temperature:%dC\nHumidity: %d%%\nSmoke: %d\nVoltage: %d\n",
-      *temperature, *humidity, *smoke, *calSmokeVoltage);
-  // lv_label_set_text_fmt(label, "Humidity: %.2f%%\n", *humidity);
-
-  /* Size of the screen (if you use rotation 90 or 270, please set
-   * disp->driver->ver_res) */
-  lv_obj_set_width(label, disp->driver->hor_res);
-  lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
-}
-
 void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   TAG = "RX_CALLBACK";
   gpio_set_level(RECEIVER_LED, 1);
@@ -144,7 +109,7 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   ESP_LOGI(TAG, "total packets received: %d", total_packets_received);
 
   total_packets_received++;
-  display_oled(&temperature, &humidity, &rawSmoke, &calSmokeVoltage);
+  display_oled(disp, &temperature, &humidity, &rawSmoke, &calSmokeVoltage);
   gpio_set_level(RECEIVER_LED, 0);
 }
 
@@ -154,70 +119,6 @@ void setup_gpio_interrupts(gpio_num_t gpio, sx127x *device) {
   gpio_pullup_dis(gpio);
   gpio_set_intr_type(gpio, GPIO_INTR_POSEDGE);
   gpio_isr_handler_add(gpio, handle_interrupt_fromisr, (void *)device);
-}
-
-void setupOled() {
-  TAG = "SETUP_OLED";
-  ESP_LOGI(TAG, "Initialize I2C bus");
-  i2c_master_bus_handle_t i2c_bus = NULL;
-  i2c_master_bus_config_t bus_config = {
-      .clk_source = I2C_CLK_SRC_DEFAULT,
-      .glitch_ignore_cnt = 7,
-      .i2c_port = I2C_BUS_PORT,
-      .sda_io_num = OLED_PIN_NUM_SDA,
-      .scl_io_num = OLED_PIN_NUM_SCL,
-      .flags.enable_internal_pullup = true,
-  };
-  ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, &i2c_bus));
-
-  ESP_LOGI(TAG, "Install panel IO");
-  esp_lcd_panel_io_handle_t io_handle = NULL;
-  esp_lcd_panel_io_i2c_config_t io_config = {
-      .dev_addr = OLED_I2C_HW_ADDR,
-      .scl_speed_hz = OLED_PIXEL_CLOCK_HZ,
-      .control_phase_bytes = 1,        // According to SSD1306 datasheet
-      .lcd_cmd_bits = OLED_CMD_BITS,   // According to SSD1306 datasheet
-      .lcd_param_bits = OLED_CMD_BITS, // According to SSD1306 datasheet
-      .dc_bit_offset = 6,              // According to SSD1306 datasheet
-  };
-
-  ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c(i2c_bus, &io_config, &io_handle));
-  ESP_LOGI(TAG, "Install SSD1306 panel driver");
-  esp_lcd_panel_handle_t panel_handle = NULL;
-  esp_lcd_panel_dev_config_t panel_config = {
-      .bits_per_pixel = 1,
-      .reset_gpio_num = OLED_PIN_NUM_RST,
-  };
-  ESP_ERROR_CHECK(
-      esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle));
-
-  ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
-  ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
-  ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
-
-  // setup lvgl
-  TAG = "LVGL_SETUP";
-  ESP_LOGI(TAG, "Initialize LVGL");
-  const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
-  lvgl_port_init(&lvgl_cfg);
-
-  const lvgl_port_display_cfg_t disp_cfg = {.io_handle = io_handle,
-                                            .panel_handle = panel_handle,
-                                            .buffer_size =
-                                                OLED_H_RES * OLED_V_RES,
-                                            .double_buffer = true,
-                                            .hres = OLED_H_RES,
-                                            .vres = OLED_V_RES,
-                                            .monochrome = true,
-                                            .rotation = {
-                                                .swap_xy = false,
-                                                .mirror_x = false,
-                                                .mirror_y = false,
-                                            }};
-  disp = lvgl_port_add_disp(&disp_cfg);
-
-  /* Rotation of the screen */
-  lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
 }
 
 void setupLora() {
@@ -432,23 +333,6 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf,
   return ESP_OK;
 }
 
-#define LV_COLOR_WHITE lv_color_make(255, 255, 255)
-#define LV_COLOR_BLACK lv_color_make(0, 0, 0)
-#define QR_CODE_SIZE 33
-void display_oled_qr(char *link) {
-
-  TAG = "QRCODE_DISPLAY";
-  ESP_LOGI(TAG, "Displaying QR code on OLED");
-  lv_obj_t *qrcode_obj =
-      lv_qrcode_create(lv_scr_act(), 60, LV_COLOR_BLACK,
-                       LV_COLOR_WHITE); // Replace values as needed
-
-  // Update the QR code content
-  lv_qrcode_update(qrcode_obj, link, strlen(link));
-  lv_obj_align(qrcode_obj, LV_ALIGN_CENTER, 0, 0);
-  lv_scr_load(lv_scr_act());
-}
-
 static void wifi_prov_print_qr(const char *name, const char *transport) {
   if (!name || !transport) {
     ESP_LOGW(TAG, "Cannot generate QR code payload. Data missing.");
@@ -570,7 +454,7 @@ void setupWifi() {
 void app_main() {
   ESP_LOGI(TAG, "starting up");
   gpio_set_direction(RECEIVER_LED, GPIO_MODE_OUTPUT);
-  setupOled();
+  setupOled(disp);
 
   gpio_set_level(RECEIVER_LED, 0);
   setupWifi();
