@@ -25,6 +25,12 @@
     "oled_display.h": "c",
     "i2c_master.h": "c",
     "sx127x.h": "c",
-    "spi_master.h": "c"
+    "spi_master.h": "c",
+    "esp_lcd_panel_ops.h": "c",
+    "esp_lcd_panel_vendor.h": "c",
+    "qrcodegen.h": "c",
+    "esp_mac.h": "c",
+    "scheme_softap.h": "c",
+    "qrcode.h": "c"
   }
 }

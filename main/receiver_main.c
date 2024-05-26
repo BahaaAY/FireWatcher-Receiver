@@ -7,6 +7,12 @@
 #include <inttypes.h>
 #include <sx127x.h>
 
+#include "esp_mac.h"
+#include "esp_wifi.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
+#include "nvs_flash.h"
+
 #include "driver/i2c_master.h"
 
 #include "esp_lcd_panel_io.h"
@@ -16,19 +22,9 @@
 #include "esp_lvgl_port.h"
 #include "lvgl.h"
 
-#include "esp_mac.h"
-#include "esp_wifi.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-#include "nvs_flash.h"
-
-#include "qrcode.h"
 #include <wifi_provisioning/scheme_softap.h>
 
-#include "./espressif__qrcode/qrcodegen.h"
-
 #include "oled_display.h"
-
 // LORA PINS
 #define SCK 5
 #define MISO 19
@@ -333,29 +329,6 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf,
   return ESP_OK;
 }
 
-static void wifi_prov_print_qr(const char *name, const char *transport) {
-  if (!name || !transport) {
-    ESP_LOGW(TAG, "Cannot generate QR code payload. Data missing.");
-    return;
-  }
-  char payload[150] = {0};
-  snprintf(payload, sizeof(payload),
-           "{\"ver\":\"%s\",\"name\":\"%s\""
-           ",\"transport\":\"%s\"}",
-           PROV_QR_VERSION, name, transport);
-  ESP_LOGI(
-      TAG,
-      "Scan this QR code from the provisioning application for Provisioning.");
-
-  display_oled_qr(payload);
-  esp_qrcode_config_t cfg = ESP_QRCODE_CONFIG_DEFAULT();
-  esp_qrcode_generate(&cfg, payload);
-  ESP_LOGI(TAG,
-           "If QR code is not visible, copy paste the below URL in a "
-           "browser.\n%s?data=%s",
-           QRCODE_BASE_URL, payload);
-}
-
 void setupWifi() {
   TAG = "SETUP_WIFI";
   /* Initialize NVS partition */
@@ -435,8 +408,8 @@ void setupWifi() {
         security, (const void *)NULL, service_name, service_key));
 
     /* PRINT QR */
-    wifi_prov_print_qr(service_name, PROV_TRANSPORT_SOFTAP);
-
+    // wifi_prov_print_qr(service_name, PROV_TRANSPORT_SOFTAP);
+    display_oled_qr(service_name, PROV_TRANSPORT_SOFTAP, PROV_QR_VERSION);
   } else {
     ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
 

@@ -1,13 +1,6 @@
+#include "oled_display.h"
 
-#include "driver/i2c_master.h"
-#include "esp_lcd_panel_io.h"
-#include "esp_lcd_panel_ops.h"
-#include "esp_lcd_panel_vendor.h"
-#include "esp_lvgl_port.h"
-#include "lvgl.h"
-#include <esp_log.h>
 #define I2C_BUS_PORT 0
-
 #define OLED_PIXEL_CLOCK_HZ (400 * 1000)
 #define OLED_PIN_NUM_SDA 4
 #define OLED_PIN_NUM_SCL 15
@@ -95,16 +88,28 @@ void setupOled() {
 
 #define LV_COLOR_WHITE lv_color_make(255, 255, 255)
 #define LV_COLOR_BLACK lv_color_make(0, 0, 0)
-void display_oled_qr(char *link) {
+void display_oled_qr(char *name, char *transport, char *ver) {
+  const char *TAG = "DISPLAY_QR_CODE";
+  if (!name || !transport) {
+    ESP_LOGW(TAG, "Cannot generate QR code payload. Data missing.");
+    return;
+  }
+  char payload[150] = {0};
+  snprintf(payload, sizeof(payload),
+           "{\"ver\":\"%s\",\"name\":\"%s\""
+           ",\"transport\":\"%s\"}",
+           ver, name, transport);
+  ESP_LOGI(
+      TAG,
+      "Scan this QR code from the provisioning application for Provisioning.");
 
-  const char *TAG = "QRCODE_DISPLAY";
   ESP_LOGI(TAG, "Displaying QR code on OLED");
   lv_obj_t *qrcode_obj =
       lv_qrcode_create(lv_scr_act(), 60, LV_COLOR_BLACK,
                        LV_COLOR_WHITE); // Replace values as needed
 
   // Update the QR code content
-  lv_qrcode_update(qrcode_obj, link, strlen(link));
+  lv_qrcode_update(qrcode_obj, payload, strlen(payload));
   lv_obj_align(qrcode_obj, LV_ALIGN_CENTER, 0, 0);
   lv_scr_load(lv_scr_act());
 }
