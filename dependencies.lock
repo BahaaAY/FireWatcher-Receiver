@@ -5,6 +5,18 @@ dependencies:
       service_url: https://api.components.espressif.com/
       type: service
     version: 3.1.2
+  espressif/button:
+    component_hash: 1f5297fe16f0ee988dbb14b6f4c91782fe2baf85025bb15cc1e0093edd3fb2ee
+    source:
+      service_url: https://api.components.espressif.com/
+      type: service
+    version: 3.2.0
+  espressif/cmake_utilities:
+    component_hash: 351350613ceafba240b761b4ea991e0f231ac7a9f59a9ee901f751bddc0bb18f
+    source:
+      service_url: https://api.components.espressif.com/
+      type: service
+    version: 0.5.3
   espressif/esp_lvgl_port:
     component_hash: b43dc04720d126cbfe14d53a84787e4c24b7bd7f15468e224c930ad3ffb32258
     source:
@@ -22,6 +34,6 @@ dependencies:
       service_url: https://api.components.espressif.com/
       type: service
     version: 8.3.11
-manifest_hash: 7d5a5e4f1c5be529ae1328d56d2a25e8211d1be4d6f94783d45343c7249a2234
+manifest_hash: 896eaca53eaf9adb7ee000f78b2a1e892f1d8cd399e1b5edeeee2560d1a280ca
 target: esp32
 version: 1.0.0

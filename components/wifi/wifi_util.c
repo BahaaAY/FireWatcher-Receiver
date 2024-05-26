@@ -4,7 +4,7 @@
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
 static EventGroupHandle_t wifi_event_group;
-
+static void reset_prov_long_press_cb(void *arg, void *usr_data);
 /* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data) {
@@ -126,6 +126,29 @@ void setup_wifi() {
   char *TAG = "SETUP_WIFI";
   gpio_set_level(WIFI_NOT_PROV_PIN, 1);
   gpio_set_level(WIFI_PROV_PIN, 0);
+  /* Initialize Reset Wifi button */
+  button_config_t gpio_btn_cfg = {
+      .type = BUTTON_TYPE_GPIO,
+      .long_press_time = CONFIG_BUTTON_LONG_PRESS_TIME_MS,
+      .short_press_time = CONFIG_BUTTON_SHORT_PRESS_TIME_MS,
+      .gpio_button_config =
+          {
+              .gpio_num = 0,
+              .active_level = 0,
+          },
+  };
+  button_handle_t gpio_btn = iot_button_create(&gpio_btn_cfg);
+  if (NULL == gpio_btn) {
+    ESP_LOGE(TAG, "Button create failed");
+  }
+  button_event_config_t btn_event_cfg = {
+      .event = BUTTON_LONG_PRESS_START,
+      .event_data.long_press.press_time = 3000,
+  };
+
+  iot_button_register_event_cb(gpio_btn, btn_event_cfg,
+                               reset_prov_long_press_cb, NULL);
+
   /* Initialize NVS partition */
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
@@ -246,4 +269,12 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf,
   *outlen = strlen(response) + 1; /* +1 for NULL terminating byte */
 
   return ESP_OK;
+}
+
+static void reset_prov_long_press_cb(void *arg, void *usr_data) {
+  char *TAG = "BUTTON_LONG_PRESS_1_CB";
+  ESP_LOGI(TAG, "BUTTON_LONG_PRESS_START_1");
+  ESP_ERROR_CHECK(wifi_prov_mgr_reset_provisioning());
+  ESP_LOGI(TAG, "Resetting provisioning");
+  esp_restart();
 }

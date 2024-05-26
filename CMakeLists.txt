@@ -7,6 +7,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/UncleRus/esp-idf-lib.git
 )
 FetchContent_MakeAvailable(espidflib)
-set(EXTRA_COMPONENT_DIRS ${espidflib_SOURCE_DIR}/components ${CMAKE_CURRENT_LIST_DIR}/components)
+set(EXTRA_COMPONENT_DIRS ${espidflib_SOURCE_DIR}/components/esp_idf_lib_helpers ${espidflib_SOURCE_DIR}/components/dht ${CMAKE_CURRENT_LIST_DIR}/components)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(FireWatcher-Receiver)

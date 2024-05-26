@@ -22,7 +22,6 @@ void app_main() {
   gpio_set_direction(WIFI_NOT_PROV_PIN, GPIO_MODE_OUTPUT);
   gpio_set_direction(WIFI_PROV_PIN, GPIO_MODE_OUTPUT);
   setupOled();
-
   gpio_set_level(RECEIVER_LED, 0);
   setup_wifi();
 
