@@ -31,6 +31,9 @@
     "qrcodegen.h": "c",
     "esp_mac.h": "c",
     "scheme_softap.h": "c",
-    "qrcode.h": "c"
+    "qrcode.h": "c",
+    "esp_wifi.h": "c",
+    "spi_common.h": "c",
+    "gpio.h": "c"
   }
 }
