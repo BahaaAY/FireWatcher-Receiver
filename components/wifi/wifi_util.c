@@ -55,6 +55,8 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     case WIFI_PROV_END:
       /* De-initialize manager once provisioning is finished */
       wifi_prov_mgr_deinit();
+      gpio_set_level(WIFI_NOT_PROV_PIN, 0);
+      gpio_set_level(WIFI_PROV_PIN, 1);
       setup_lora();
       break;
     default:
@@ -122,6 +124,8 @@ static void wifi_init_sta(void) {
 
 void setup_wifi() {
   char *TAG = "SETUP_WIFI";
+  gpio_set_level(WIFI_NOT_PROV_PIN, 1);
+  gpio_set_level(WIFI_PROV_PIN, 0);
   /* Initialize NVS partition */
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
@@ -167,7 +171,7 @@ void setup_wifi() {
    * configuration parameters set above */
   ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
   bool provisioned = false;
-  bool reset_prov = true;
+  bool reset_prov = false;
   if (reset_prov) {
     ESP_ERROR_CHECK(wifi_prov_mgr_reset_provisioning());
   }
@@ -175,6 +179,8 @@ void setup_wifi() {
   /* If device is not yet provisioned start provisioning service */
   if (!provisioned) {
     ESP_LOGI(TAG, "Starting provisioning");
+    gpio_set_level(WIFI_NOT_PROV_PIN, 1);
+    gpio_set_level(WIFI_PROV_PIN, 0);
 
     /* What is the Device Service Name that we want
      * This translates to :
@@ -203,12 +209,15 @@ void setup_wifi() {
     display_oled_qr(service_name, PROV_TRANSPORT_SOFTAP, PROV_QR_VERSION);
   } else {
     ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
-
+    gpio_set_level(WIFI_NOT_PROV_PIN, 0);
+    gpio_set_level(WIFI_PROV_PIN, 1);
     /* We don't need the manager as device is already provisioned,
      * so let's release it's resources */
     wifi_prov_mgr_deinit();
     /* Start Wi-Fi station */
     wifi_init_sta();
+    gpio_set_level(WIFI_NOT_PROV_PIN, 0);
+    gpio_set_level(WIFI_PROV_PIN, 1);
     setup_lora();
   }
   /* Wait for Wi-Fi connection */

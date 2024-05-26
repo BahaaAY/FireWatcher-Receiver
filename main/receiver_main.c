@@ -7,7 +7,6 @@
 #include <freertos/task.h>
 #include <stdint.h>
 
-
 lv_disp_t *disp;
 
 int16_t humidity, temperature, rawSmoke, calSmokeVoltage = 0;
@@ -20,6 +19,8 @@ static const char *TAG = "MAIN";
 void app_main() {
   ESP_LOGI(TAG, "starting up");
   gpio_set_direction(RECEIVER_LED, GPIO_MODE_OUTPUT);
+  gpio_set_direction(WIFI_NOT_PROV_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_direction(WIFI_PROV_PIN, GPIO_MODE_OUTPUT);
   setupOled();
 
   gpio_set_level(RECEIVER_LED, 0);

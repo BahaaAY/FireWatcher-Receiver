@@ -20,7 +20,7 @@
 #define DIO1 35
 #define DIO2 34
 
-#define RECEIVER_LED 33
+#define RECEIVER_LED 25
 
 void setup_lora();
 void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length);
