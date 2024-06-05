@@ -1,5 +1,8 @@
 #include "lora_comm.h"
-
+#include "enc_utils.h"
+#define AES_KEY_SIZE 32 // 256 bits
+#define AES_IV_SIZE 12  // 96 bits
+#define AES_TAG_SIZE 16
 extern sx127x *device;
 extern int16_t humidity, temperature, rawSmoke, calSmokeVoltage;
 extern TaskHandle_t handle_interrupt;
@@ -74,6 +77,7 @@ void setup_lora() {
 void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   char *TAG = "RX_CALLBACK";
   gpio_set_level(RECEIVER_LED, 1);
+
   uint8_t payload[514];
   const char SYMBOLS[] = "0123456789ABCDEF";
   for (size_t i = 0; i < data_length; i++) {
@@ -82,6 +86,20 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
     payload[2 * i + 1] = SYMBOLS[cur & 0x0F];
   }
   payload[data_length * 2] = '\0';
+
+  uint8_t decrypted_data[128]; // Adjust size accordingly
+  int ret;
+
+  // Decrypt the received data
+  ret = decrypt_data(data, data_length, decrypted_data);
+  if (ret != 0) {
+    ESP_LOGE(TAG, "Failed to decrypt data");
+    return;
+  }
+
+  // Print decrypted data for debugging
+  print_hex("Decrypted Data", decrypted_data,
+            data_length - AES_IV_SIZE - AES_TAG_SIZE);
 
   int32_t frequency_error;
   ESP_ERROR_CHECK(sx127x_rx_get_frequency_error(device, &frequency_error));
@@ -92,7 +110,8 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   ESP_ERROR_CHECK(sx127x_rx_get_packet_rssi(device, &rssi));
   ESP_LOGI(TAG, "with rssi: %d", rssi);
 
-  unpackData(data, &humidity, &temperature, &rawSmoke, &calSmokeVoltage);
+  unpackData(decrypted_data, &humidity, &temperature, &rawSmoke,
+             &calSmokeVoltage);
   ESP_LOGI(TAG, "Humidity: %d%%", humidity);
   ESP_LOGI(TAG, "Temperature: %dC", temperature);
   ESP_LOGI(TAG, "Raw Smoke: %d", rawSmoke);
