@@ -121,7 +121,9 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
 
   total_packets_received++;
   display_oled(&temperature, &humidity, &rawSmoke, &calSmokeVoltage);
+  send_data_to_server(&temperature, &humidity, &rawSmoke);
   gpio_set_level(RECEIVER_LED, 0);
+  ESP_LOGI(TAG, "done");
 }
 
 void IRAM_ATTR handle_interrupt_fromisr(void *arg) {

@@ -26,6 +26,7 @@ void app_main() {
   setup_wifi();
 
   while (1) {
+    ESP_LOGI(TAG, "MAIN LOOP");
     vTaskDelay(10000 / portTICK_PERIOD_MS);
   }
 }
