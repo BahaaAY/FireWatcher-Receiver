@@ -35,6 +35,7 @@
     "esp_wifi.h": "c",
     "spi_common.h": "c",
     "gpio.h": "c",
-    "enc_utils.h": "c"
+    "enc_utils.h": "c",
+    "http_util.h": "c"
   }
 }

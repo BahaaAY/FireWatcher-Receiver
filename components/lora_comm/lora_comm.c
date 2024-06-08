@@ -1,5 +1,6 @@
 #include "lora_comm.h"
 #include "enc_utils.h"
+#include "sensor_data.h"
 #define AES_KEY_SIZE 32 // 256 bits
 #define AES_IV_SIZE 12  // 96 bits
 #define AES_TAG_SIZE 16
@@ -7,6 +8,8 @@ extern sx127x *device;
 extern int16_t humidity, temperature, rawSmoke, calSmokeVoltage;
 extern TaskHandle_t handle_interrupt;
 extern int total_packets_received;
+
+extern QueueHandle_t readings_queue;
 void setup_lora() {
   char *TAG = "SETUP_LORA";
   spi_bus_config_t config = {
@@ -120,8 +123,9 @@ void rx_callback(sx127x *device, uint8_t *data, uint16_t data_length) {
   ESP_LOGI(TAG, "total packets received: %d", total_packets_received);
 
   total_packets_received++;
+  SensorData sensor_data = {humidity, temperature, rawSmoke, calSmokeVoltage};
+  xQueueSend(readings_queue, &sensor_data, 0);
   display_oled(&temperature, &humidity, &rawSmoke, &calSmokeVoltage);
-  send_data_to_server(&temperature, &humidity, &rawSmoke);
   gpio_set_level(RECEIVER_LED, 0);
   ESP_LOGI(TAG, "done");
 }
