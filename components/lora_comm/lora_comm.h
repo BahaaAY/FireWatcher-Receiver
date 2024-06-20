@@ -10,6 +10,8 @@
 #include <esp_err.h>
 #include <esp_log.h>
 
+#include "http_util.h"
+
 // LORA PINS
 #define SCK 5
 #define MISO 19

@@ -1,6 +1,8 @@
 #include "wifi_util.h"
+#include "http_util.h"
 #include "lora_comm.h"
 #include "oled_display.h"
+
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
 static EventGroupHandle_t wifi_event_group;
@@ -241,6 +243,7 @@ void setup_wifi() {
     wifi_init_sta();
     gpio_set_level(WIFI_NOT_PROV_PIN, 0);
     gpio_set_level(WIFI_PROV_PIN, 1);
+    // setup_http_client();
     setup_lora();
   }
   /* Wait for Wi-Fi connection */
